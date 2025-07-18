@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <title>Hausbelegung mit externen Daten</title>
+  <title>Hausbelegung mit Google Sheets + JSON</title>
   <style>
     body {
       background-color: black;
@@ -36,10 +36,15 @@
       font-weight: bold;
       border-radius: 8px;
       user-select: none;
+      transition: background-color 0.3s;
     }
     .haus.nicht-besetzbar {
       background-color: red;
       color: white;
+    }
+    .haus.belegt {
+      background-color: orange;
+      color: black;
     }
   </style>
 </head>
@@ -59,27 +64,54 @@
   <script>
     const hausList = document.getElementById('haus-list');
 
+    // URL für dein Google Sheet (tabellenblat5)
+    const sheetId = '1fN1FUHytqFZ9uY-DwpxRyBGHrJ_QgVeFUiM8eumH4UU';
+    const sheetName = 'tabellenblat5'; // genau so wie dein Tab
+    const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=${sheetName}`;
+
+    // JSON-Datei laden
     fetch('haeuser.json')
-      .then(response => response.json())
+      .then(res => res.json())
       .then(data => {
         const alleHaeuser = data.alleHaeuser;
         const nichtBesetzbar = new Set(data.nichtBesetzbar);
 
-        hausList.innerHTML = '';
+        // Google Sheet laden
+        fetch(url)
+          .then(res => res.text())
+          .then(text => {
+            // Google Sheets JSONP parsen
+            const jsonData = JSON.parse(text.substr(47).slice(0, -2));
+            const rows = jsonData.table.rows;
 
-        alleHaeuser.forEach(nummer => {
-          const div = document.createElement('div');
-          div.classList.add('haus');
-          if (nichtBesetzbar.has(nummer)) {
-            div.classList.add('nicht-besetzbar');
-          }
-          div.textContent = nummer;
-          hausList.appendChild(div);
-        });
+            // Annahme: Hausnummern in der ersten Spalte (index 0)
+            const belegteHaeuser = rows.map(r => r.c[0] ? r.c[0].v : null).filter(x => x !== null);
+
+            hausList.innerHTML = '';
+
+            alleHaeuser.forEach(nummer => {
+              const div = document.createElement('div');
+              div.classList.add('haus');
+
+              if (nichtBesetzbar.has(nummer)) {
+                div.classList.add('nicht-besetzbar');
+              }
+              if (belegteHaeuser.includes(nummer)) {
+                div.classList.add('belegt');
+              }
+
+              div.textContent = nummer;
+              hausList.appendChild(div);
+            });
+          })
+          .catch(err => {
+            hausList.textContent = 'Fehler beim Laden der belegten Häuser aus Google Sheets.';
+            console.error(err);
+          });
       })
       .catch(err => {
-        hausList.textContent = 'Fehler beim Laden der Häuser.';
-        console.error('Fehler beim Laden der JSON:', err);
+        hausList.textContent = 'Fehler beim Laden der JSON-Datei.';
+        console.error(err);
       });
   </script>
 
