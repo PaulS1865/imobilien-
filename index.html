@@ -60,7 +60,12 @@
     const hausList = document.getElementById('haus-list');
 
     fetch('haeuser.json')
-      .then(response => response.json())
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Netzwerkantwort war nicht ok');
+        }
+        return response.json();
+      })
       .then(data => {
         const alleHaeuser = data.alleHaeuser;
         const nichtBesetzbar = new Set(data.nichtBesetzbar);
