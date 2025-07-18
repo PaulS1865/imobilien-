@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <title>Hausbelegung mit Google Sheets + JSON</title>
+  <title>Hausbelegung mit externen Daten</title>
   <style>
     body {
       background-color: black;
@@ -23,7 +23,6 @@
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
-      min-height: 100px;
     }
     .haus {
       width: 90px;
@@ -37,15 +36,10 @@
       font-weight: bold;
       border-radius: 8px;
       user-select: none;
-      transition: background-color 0.3s;
     }
     .haus.nicht-besetzbar {
       background-color: red;
       color: white;
-    }
-    .haus.belegt {
-      background-color: orange;
-      color: black;
     }
   </style>
 </head>
@@ -63,55 +57,30 @@
   </div>
 
   <script>
-    (async () => {
-      const hausList = document.getElementById('haus-list');
+    const hausList = document.getElementById('haus-list');
 
-      // Google Sheet Infos
-      const sheetId = '1fN1FUHytqFZ9uY-DwpxRyBGHrJ_QgVeFUiM8eumH4UU';
-      const sheetName = 'Tabellenblat5'; // GENAUE Schreibweise aus Google Sheet!
-      const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=${sheetName}`;
-
-      try {
-        // JSON-Datei laden
-        const resJson = await fetch('haeuser.json');
-        if (!resJson.ok) throw new Error('JSON-Datei konnte nicht geladen werden');
-        const data = await resJson.json();
-
+    fetch('haeuser.json')
+      .then(response => response.json())
+      .then(data => {
         const alleHaeuser = data.alleHaeuser;
         const nichtBesetzbar = new Set(data.nichtBesetzbar);
 
-        // Google Sheet laden
-        const resSheet = await fetch(url);
-        if (!resSheet.ok) throw new Error('Google Sheet konnte nicht geladen werden');
-        const text = await resSheet.text();
-
-        // Google Sheets JSONP parsen
-        const jsonData = JSON.parse(text.substr(47).slice(0, -2));
-        const rows = jsonData.table.rows || [];
-
-        // Hausnummern aus erster Spalte (index 0)
-        const belegteHaeuser = rows
-          .map(r => r.c && r.c[0] ? r.c[0].v : null)
-          .filter(x => x !== null);
-
-        // Häuser rendern
         hausList.innerHTML = '';
-        alleHaeuser.forEach(nr => {
+
+        alleHaeuser.forEach(nummer => {
           const div = document.createElement('div');
           div.classList.add('haus');
-
-          if (nichtBesetzbar.has(nr)) div.classList.add('nicht-besetzbar');
-          if (belegteHaeuser.includes(nr)) div.classList.add('belegt');
-
-          div.textContent = nr;
+          if (nichtBesetzbar.has(nummer)) {
+            div.classList.add('nicht-besetzbar');
+          }
+          div.textContent = nummer;
           hausList.appendChild(div);
         });
-
-      } catch (error) {
-        hausList.textContent = 'Fehler beim Laden der Daten.';
-        console.error(error);
-      }
-    })();
+      })
+      .catch(err => {
+        hausList.textContent = 'Fehler beim Laden der Häuser.';
+        console.error('Fehler beim Laden der JSON:', err);
+      });
   </script>
 
 </body>
