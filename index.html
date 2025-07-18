@@ -23,6 +23,7 @@
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
+      min-height: 100px;
     }
     .haus {
       width: 90px;
@@ -62,57 +63,55 @@
   </div>
 
   <script>
-    const hausList = document.getElementById('haus-list');
+    (async () => {
+      const hausList = document.getElementById('haus-list');
 
-    // URL für dein Google Sheet (tabellenblat5)
-    const sheetId = '1fN1FUHytqFZ9uY-DwpxRyBGHrJ_QgVeFUiM8eumH4UU';
-    const sheetName = 'tabellenblat5'; // genau so wie dein Tab
-    const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=${sheetName}`;
+      // Google Sheet Infos
+      const sheetId = '1fN1FUHytqFZ9uY-DwpxRyBGHrJ_QgVeFUiM8eumH4UU';
+      const sheetName = 'Tabellenblat5'; // GENAUE Schreibweise aus Google Sheet!
+      const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=${sheetName}`;
 
-    // JSON-Datei laden
-    fetch('haeuser.json')
-      .then(res => res.json())
-      .then(data => {
+      try {
+        // JSON-Datei laden
+        const resJson = await fetch('haeuser.json');
+        if (!resJson.ok) throw new Error('JSON-Datei konnte nicht geladen werden');
+        const data = await resJson.json();
+
         const alleHaeuser = data.alleHaeuser;
         const nichtBesetzbar = new Set(data.nichtBesetzbar);
 
         // Google Sheet laden
-        fetch(url)
-          .then(res => res.text())
-          .then(text => {
-            // Google Sheets JSONP parsen
-            const jsonData = JSON.parse(text.substr(47).slice(0, -2));
-            const rows = jsonData.table.rows;
+        const resSheet = await fetch(url);
+        if (!resSheet.ok) throw new Error('Google Sheet konnte nicht geladen werden');
+        const text = await resSheet.text();
 
-            // Annahme: Hausnummern in der ersten Spalte (index 0)
-            const belegteHaeuser = rows.map(r => r.c[0] ? r.c[0].v : null).filter(x => x !== null);
+        // Google Sheets JSONP parsen
+        const jsonData = JSON.parse(text.substr(47).slice(0, -2));
+        const rows = jsonData.table.rows || [];
 
-            hausList.innerHTML = '';
+        // Hausnummern aus erster Spalte (index 0)
+        const belegteHaeuser = rows
+          .map(r => r.c && r.c[0] ? r.c[0].v : null)
+          .filter(x => x !== null);
 
-            alleHaeuser.forEach(nummer => {
-              const div = document.createElement('div');
-              div.classList.add('haus');
+        // Häuser rendern
+        hausList.innerHTML = '';
+        alleHaeuser.forEach(nr => {
+          const div = document.createElement('div');
+          div.classList.add('haus');
 
-              if (nichtBesetzbar.has(nummer)) {
-                div.classList.add('nicht-besetzbar');
-              }
-              if (belegteHaeuser.includes(nummer)) {
-                div.classList.add('belegt');
-              }
+          if (nichtBesetzbar.has(nr)) div.classList.add('nicht-besetzbar');
+          if (belegteHaeuser.includes(nr)) div.classList.add('belegt');
 
-              div.textContent = nummer;
-              hausList.appendChild(div);
-            });
-          })
-          .catch(err => {
-            hausList.textContent = 'Fehler beim Laden der belegten Häuser aus Google Sheets.';
-            console.error(err);
-          });
-      })
-      .catch(err => {
-        hausList.textContent = 'Fehler beim Laden der JSON-Datei.';
-        console.error(err);
-      });
+          div.textContent = nr;
+          hausList.appendChild(div);
+        });
+
+      } catch (error) {
+        hausList.textContent = 'Fehler beim Laden der Daten.';
+        console.error(error);
+      }
+    })();
   </script>
 
 </body>
