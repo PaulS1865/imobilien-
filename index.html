@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <title>Hausbelegung mit externen Daten</title>
+  <title>Hausbelegung</title>
   <style>
     body {
       background-color: black;
@@ -10,7 +10,7 @@
       font-family: Arial, sans-serif;
       padding: 20px;
     }
-    .zeiten, .haeuser {
+    .box {
       background-color: #222;
       padding: 20px;
       border-radius: 10px;
@@ -41,22 +41,28 @@
       background-color: red;
       color: white;
     }
+    a {
+      color: #0f0;
+      text-decoration: none;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
 
-  <div class="zeiten">
+  <div class="box">
     <h1>Öffnungszeiten</h1>
     <p>Montag – Donnerstag: 19:00 – 00:00 Uhr</p>
-    <p>Dienstag erst ab 21 uhr erreichbar entschuldigung für die verspätung an diesen tag <p>
-      <p> Es gibt Schwierig keiten mit denn bauarbeiter<p>
+    <p>Dienstag: Erst ab 21:00 Uhr erreichbar (wegen Bauarbeiten)</p>
     <p>Freitag – Sonntag: Nicht erreichbar</p>
   </div>
 
-  <div class="haeuser">
+  <div class="box">
     <h2>Hausbelegung</h2>
     <div class="haus-list" id="haus-list">Lade Häuser...</div>
   </div>
+
+  <p><a href="kalender.html">→ Zum Termin-Kalender</a></p>
 
   <script>
     const hausList = document.getElementById('haus-list');
@@ -64,7 +70,7 @@
     fetch('haeuser.json')
       .then(response => response.json())
       .then(data => {
-        const alleHaeuser = data.alleHaeuser.map(String); // in Strings umwandeln
+        const alleHaeuser = data.alleHaeuser.map(String);
         const nichtBesetzbar = new Set(data.nichtBesetzbar.map(String));
 
         hausList.innerHTML = '';
@@ -72,11 +78,9 @@
         alleHaeuser.forEach(nummer => {
           const div = document.createElement('div');
           div.classList.add('haus');
-
           if (nichtBesetzbar.has(nummer)) {
             div.classList.add('nicht-besetzbar');
           }
-
           div.textContent = nummer;
           hausList.appendChild(div);
         });
@@ -86,7 +90,6 @@
         console.error('Fehler beim Laden der JSON:', err);
       });
   </script>
-<p><a href="kalender.html" style="color: #0f0;">Zur Terminübersicht</a></p>
 
 </body>
 </html>
