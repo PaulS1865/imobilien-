@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Termin-Kalender</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    .termin {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 10px;
+      background-color: #f9f9f9;
+    }
+    .datum {
+      font-weight: bold;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Termin-Kalender</h1>
+  <div id="kalender"></div>
+
+  <script>
+    async function ladeTermine() {
+      const response = await fetch('termine.json');
+      const termine = await response.json();
+
+      const kalenderDiv = document.getElementById('kalender');
+
+      termine.forEach(termin => {
+        const div = document.createElement('div');
+        div.className = 'termin';
+        div.innerHTML = `
+          <div class="datum">${termin.datum} – ${termin.uhrzeit}</div>
+          <div><strong>${termin.titel}</strong></div>
+          <div>Ort: ${termin.ort}</div>
+        `;
+        kalenderDiv.appendChild(div);
+      });
+    }
+
+    ladeTermine();
+  </script>
+
+</body>
+</html>
