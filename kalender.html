@@ -5,47 +5,71 @@
   <title>Termin-Kalender</title>
   <style>
     body {
+      background-color: black;
+      color: white;
       font-family: Arial, sans-serif;
       padding: 20px;
     }
+    h1 {
+      color: white;
+    }
+    .termin-liste {
+      background-color: #222;
+      padding: 20px;
+      border-radius: 10px;
+    }
     .termin {
-      border: 1px solid #ccc;
-      border-radius: 8px;
+      background-color: #444;
       padding: 15px;
       margin-bottom: 10px;
-      background-color: #f9f9f9;
+      border-left: 6px solid #0f0;
+      border-radius: 6px;
     }
-    .datum {
+    .termin h3 {
+      margin: 0;
+      color: #0f0;
+    }
+    .termin p {
+      margin: 5px 0;
+    }
+    a {
+      color: #0f0;
+      text-decoration: none;
       font-weight: bold;
-      color: #333;
     }
   </style>
 </head>
 <body>
 
   <h1>Termin-Kalender</h1>
-  <div id="kalender"></div>
+  <div class="termin-liste" id="termin-liste">Lade Termine...</div>
+
+  <p><a href="index.html">← Zur Hausbelegung</a></p>
 
   <script>
-    async function ladeTermine() {
-      const response = await fetch('termine.json');
-      const termine = await response.json();
+    const terminListe = document.getElementById('termin-liste');
 
-      const kalenderDiv = document.getElementById('kalender');
+    fetch('termine.json')
+      .then(response => response.json())
+      .then(termine => {
+        terminListe.innerHTML = '';
 
-      termine.forEach(termin => {
-        const div = document.createElement('div');
-        div.className = 'termin';
-        div.innerHTML = `
-          <div class="datum">${termin.datum} – ${termin.uhrzeit}</div>
-          <div><strong>${termin.titel}</strong></div>
-          <div>Ort: ${termin.ort}</div>
-        `;
-        kalenderDiv.appendChild(div);
+        termine.forEach(termin => {
+          const div = document.createElement('div');
+          div.className = 'termin';
+          div.innerHTML = `
+            <h3>${termin.titel}</h3>
+            <p><strong>Datum:</strong> ${termin.datum}</p>
+            <p><strong>Uhrzeit:</strong> ${termin.uhrzeit}</p>
+            <p><strong>Ort:</strong> ${termin.ort}</p>
+          `;
+          terminListe.appendChild(div);
+        });
+      })
+      .catch(err => {
+        terminListe.textContent = 'Fehler beim Laden der Termine.';
+        console.error('Fehler beim Laden der JSON:', err);
       });
-    }
-
-    ladeTermine();
   </script>
 
 </body>
